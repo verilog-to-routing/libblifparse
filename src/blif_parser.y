@@ -92,6 +92,21 @@
 
 using namespace blifparse;
 
+//Need extra state to determine when .names ends
+bool in_names = false;
+
+void enter_names(Callback& callback, std::vector<std::string> connections) {
+    in_names = true;
+    callback.start_names(connections);
+}
+
+void exit_names(Callback& callback) {
+    if(in_names) {
+        callback.end_names();
+        in_names = false;
+    }
+}
+
 %}
 
 /* Declare constant */
@@ -126,6 +141,7 @@ using namespace blifparse;
 /* declare types */
 %type <std::vector<std::string>> string_list
 %type <std::vector<LogicValue>> so_cover_row
+%type <LogicValue> logic_value
 %type <LogicValue> latch_init
 %type <std::string> latch_control
 %type <LatchType> latch_type
@@ -136,35 +152,67 @@ using namespace blifparse;
 %%
 
 blif_data: /*empty*/ {}
-    | blif_data DOT_MODEL STRING EOL { callback.start_model($3); }
-    | blif_data DOT_INPUTS string_list EOL { callback.inputs($3); }
-    | blif_data DOT_OUTPUTS string_list EOL { callback.outputs($3); }
-    | blif_data DOT_NAMES string_list EOL { callback.start_names($3); }
-    | blif_data so_cover_row EOL { callback.single_output_cover_row($2); }
-    | blif_data latch EOL { }
-    | blif_data subckt EOL { callback.end_subckt(); }
-    | blif_data DOT_BLACKBOX EOL { callback.blackbox(); }
-    | blif_data DOT_END EOL { callback.end_model(); }
+    | blif_data DOT_MODEL STRING EOL        { 
+                                                exit_names(callback);
+                                                callback.start_model($3); 
+                                            }
+    | blif_data DOT_INPUTS string_list EOL  { 
+                                                exit_names(callback);
+                                                callback.inputs($3); 
+                                            }
+    | blif_data DOT_OUTPUTS string_list EOL { 
+                                                exit_names(callback);
+                                                callback.outputs($3); 
+                                            }
+    | blif_data DOT_NAMES string_list EOL   { 
+                                                exit_names(callback);
+                                                enter_names(callback, $3);
+                                            }
+    | blif_data so_cover_row EOL            { 
+                                                callback.single_output_cover_row($2); 
+                                            }
+    | blif_data latch EOL                   { }
+    | blif_data subckt EOL                  { 
+                                                callback.end_subckt(); 
+                                            }
+    | blif_data DOT_BLACKBOX EOL            { 
+                                                exit_names(callback);
+                                                callback.blackbox(); 
+                                            }
+    | blif_data DOT_END EOL                 { 
+                                                exit_names(callback);
+                                                callback.end_model(); 
+                                            }
+    | blif_data EOL                         {}
     ;
 
-subckt: DOT_SUBCKT STRING { callback.start_subckt($2); }
-    | subckt STRING EQ STRING { callback.port_connection($2, $4); }
+subckt: DOT_SUBCKT STRING       { 
+                                    exit_names(callback);
+                                    callback.start_subckt($2);
+                                }
+    | subckt STRING EQ STRING   { 
+                                    callback.port_connection($2, $4);
+                                }
     ;
 
 latch: DOT_LATCH STRING STRING {
                                     //Input and output only
+                                    exit_names(callback);
                                     callback.latch($2, $3, LatchType::UNSPECIFIED, "", LogicValue::UNKOWN);
                                }
     | DOT_LATCH STRING STRING latch_type latch_control {
                                     //Input, output, type and control
+                                    exit_names(callback);
                                     callback.latch($2, $3, $4, $5, LogicValue::UNKOWN);
                                }
     | DOT_LATCH STRING STRING latch_type latch_control latch_init {
                                     //Input, output, type, control and init-value
+                                    exit_names(callback);
                                     callback.latch($2, $3, $4, $5, $6);
                                }
     | DOT_LATCH STRING STRING latch_init {
                                     //Input, output, and init-value
+                                    exit_names(callback);
                                     callback.latch($2, $3, LatchType::UNSPECIFIED, "", $4);
                                }
     ;
@@ -186,10 +234,13 @@ latch_type: LATCH_FE { $$ = LatchType::FALLING_EDGE; }
     | LATCH_AS { $$ = LatchType::ASYNCHRONOUS; }
     ;
 
-so_cover_row: /* empty */ { $$ = std::vector<LogicValue>(); }
-    | so_cover_row LOGIC_TRUE { $$ = $1; $$.push_back(LogicValue::TRUE); }
-    | so_cover_row LOGIC_FALSE { $$ = $1; $$.push_back(LogicValue::FALSE); }
-    | so_cover_row LOGIC_DONT_CARE {$$ = $1; $$.push_back(LogicValue::DONT_CARE); }
+so_cover_row: logic_value { $$ = std::vector<LogicValue>(); $$.push_back($1); }
+    | so_cover_row logic_value { $$ = $1; $$.push_back($2); }
+    ;
+
+logic_value: LOGIC_TRUE { $$ = LogicValue::TRUE; }
+    | LOGIC_FALSE { $$ = LogicValue::FALSE; }
+    | LOGIC_DONT_CARE { $$ = LogicValue::DONT_CARE; }
     ;
 
 string_list: /*empty*/ { $$ = std::vector<std::string>(); }

@@ -4,6 +4,8 @@
 
 namespace blifparse {
 
+//An example callback which pretty-prints to stdout
+//the BLIF which is being parsed 
 class BlifPrettyPrinter : public Callback {
     public:
         void start_model(std::string model_name) override;

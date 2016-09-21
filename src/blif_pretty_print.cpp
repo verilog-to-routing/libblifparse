@@ -51,20 +51,22 @@ void BlifPrettyPrinter::start_names(std::vector<std::string> connections) {
 
 void BlifPrettyPrinter::single_output_cover_row(std::vector<LogicValue> so_row) {
     for(size_t i = 0; i < so_row.size(); ++i) {
-        if(i == so_row.size() - 1) {
-            printf(" ");
-        }
         switch(so_row[i]) {
             case LogicValue::FALSE:     printf("0"); break;
             case LogicValue::TRUE:      printf("1"); break;
             case LogicValue::DONT_CARE: printf("-"); break;
             default: assert(false);
         }
+        if(i == so_row.size() - 2) {
+            printf(" ");
+        }
     }
     printf("\n");
 }
 
-void BlifPrettyPrinter::end_names() {}
+void BlifPrettyPrinter::end_names() {
+    printf("\n");
+}
 
 void BlifPrettyPrinter::latch(std::string input, std::string output, LatchType type, std::string control, LogicValue init) {
     printf(".latch \\\n");
