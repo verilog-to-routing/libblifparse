@@ -42,16 +42,9 @@ class Callback {
         virtual void inputs(std::vector<std::string> inputs) = 0;
         virtual void outputs(std::vector<std::string> outputs) = 0;
 
-        virtual void start_names(std::vector<std::string> connections) = 0;
-        virtual void single_output_cover_row(std::vector<LogicValue> so_row) = 0;
-        virtual void end_names() = 0;
-
+        virtual void names(std::vector<std::string> nets, std::vector<std::vector<LogicValue>> so_cover) = 0;
         virtual void latch(std::string input, std::string output, LatchType type, std::string control, LogicValue init) = 0;
-
-        virtual void start_subckt(std::string model) = 0;
-        virtual void port_connection(std::string port, std::string net) = 0;
-        virtual void end_subckt() = 0;
-
+        virtual void subckt(std::string model, std::vector<std::string> ports, std::vector<std::string> nets) = 0;
         virtual void blackbox() = 0;
 
         virtual void end_model() = 0;

@@ -38,33 +38,30 @@ void BlifPrettyPrinter::outputs(std::vector<std::string> output_conns) {
     printf("\n");
 }
 
-void BlifPrettyPrinter::start_names(std::vector<std::string> connections) {
+void BlifPrettyPrinter::names(std::vector<std::string> nets, std::vector<std::vector<LogicValue>> so_cover) {
     printf(".names ");
-    for(size_t i = 0; i < connections.size(); ++i) {
-        printf("%s", connections[i].c_str());
-        if(i != connections.size() - 1) {
+    for(size_t i = 0; i < nets.size(); ++i) {
+        printf("%s", nets[i].c_str());
+        if(i != nets.size() - 1) {
             printf(" ");
         }
     }
     printf("\n");
-}
 
-void BlifPrettyPrinter::single_output_cover_row(std::vector<LogicValue> so_row) {
-    for(size_t i = 0; i < so_row.size(); ++i) {
-        switch(so_row[i]) {
-            case LogicValue::FALSE:     printf("0"); break;
-            case LogicValue::TRUE:      printf("1"); break;
-            case LogicValue::DONT_CARE: printf("-"); break;
-            default: assert(false);
+    for(const auto& so_row : so_cover) { 
+        for(size_t i = 0; i < so_row.size(); ++i) {
+            switch(so_row[i]) {
+                case LogicValue::FALSE:     printf("0"); break;
+                case LogicValue::TRUE:      printf("1"); break;
+                case LogicValue::DONT_CARE: printf("-"); break;
+                default: assert(false);
+            }
+            if(i == so_row.size() - 2) {
+                printf(" ");
+            }
         }
-        if(i == so_row.size() - 2) {
-            printf(" ");
-        }
+        printf("\n");
     }
-    printf("\n");
-}
-
-void BlifPrettyPrinter::end_names() {
     printf("\n");
 }
 
@@ -102,17 +99,22 @@ void BlifPrettyPrinter::latch(std::string input, std::string output, LatchType t
     printf("\n");
 }
 
-void BlifPrettyPrinter::start_subckt(std::string model) {
+void BlifPrettyPrinter::subckt(std::string model, std::vector<std::string> ports, std::vector<std::string> nets) {
     printf(".subckt %s \\\n", model.c_str());
+
     ++indent_level_;
-}
+    assert(ports.size() == nets.size());
+    for(size_t i = 0; i < ports.size(); i++) {
+        printf("%s%s=%s", indent().c_str(), ports[i].c_str(), nets[i].c_str());
 
-void BlifPrettyPrinter::port_connection(std::string port, std::string net) {
-    printf("%s%s=%s \\\n", indent().c_str(), port.c_str(), net.c_str());
-}
+        if(i != ports.size() - 1) {
+            printf(" \\");
+        }
 
-void BlifPrettyPrinter::end_subckt() {
+        printf("\n");
+    }
     --indent_level_;
+
     printf("\n");
 }
 

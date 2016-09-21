@@ -8,6 +8,7 @@
 #define YY_NULLPTR nullptr
 #endif
 
+#include "blif_common.hpp"
 #include "blif_parser.gen.h" //For the generated Parser class
 
 #endif

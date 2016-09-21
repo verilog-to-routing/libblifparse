@@ -2,7 +2,6 @@
 #define BLIF_COMMON_HPP
 
 #include "blifparse.hpp"
-#include "blif_lexer.hpp"
 
 namespace blifparse {
 
@@ -10,9 +9,16 @@ namespace blifparse {
  * Function Declarations
  */
 
-//utility
-char* strdup(const char* src);
-char* strndup(const char* src, size_t len);
+struct Names {
+    std::vector<std::string> nets;
+    std::vector<std::vector<LogicValue>> so_cover;
+};
+
+struct SubCkt {
+    std::string model;
+    std::vector<std::string> ports;
+    std::vector<std::string> nets;
+};
 
 } //namespace
 #endif

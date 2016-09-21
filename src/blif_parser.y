@@ -92,21 +92,6 @@
 
 using namespace blifparse;
 
-//Need extra state to determine when .names ends
-bool in_names = false;
-
-void enter_names(Callback& callback, std::vector<std::string> connections) {
-    in_names = true;
-    callback.start_names(connections);
-}
-
-void exit_names(Callback& callback) {
-    if(in_names) {
-        callback.end_names();
-        in_names = false;
-    }
-}
-
 %}
 
 /* Declare constant */
@@ -139,6 +124,8 @@ void exit_names(Callback& callback) {
 %token <std::string> CHAR
 
 /* declare types */
+%type <SubCkt> subckt
+%type <Names> names
 %type <std::vector<std::string>> string_list
 %type <std::vector<LogicValue>> so_cover_row
 %type <LogicValue> logic_value
@@ -152,67 +139,39 @@ void exit_names(Callback& callback) {
 %%
 
 blif_data: /*empty*/ {}
-    | blif_data DOT_MODEL STRING EOL        { 
-                                                exit_names(callback);
-                                                callback.start_model($3); 
-                                            }
-    | blif_data DOT_INPUTS string_list EOL  { 
-                                                exit_names(callback);
-                                                callback.inputs($3); 
-                                            }
-    | blif_data DOT_OUTPUTS string_list EOL { 
-                                                exit_names(callback);
-                                                callback.outputs($3); 
-                                            }
-    | blif_data DOT_NAMES string_list EOL   { 
-                                                exit_names(callback);
-                                                enter_names(callback, $3);
-                                            }
-    | blif_data so_cover_row EOL            { 
-                                                callback.single_output_cover_row($2); 
-                                            }
+    | blif_data DOT_MODEL STRING EOL        { callback.start_model($3); }
+    | blif_data DOT_INPUTS string_list EOL  { callback.inputs($3); }
+    | blif_data DOT_OUTPUTS string_list EOL { callback.outputs($3); }
+    | blif_data names                       { callback.names($2.nets, $2.so_cover); }
+    | blif_data subckt EOL                  { callback.subckt($2.model, $2.ports, $2.nets); }
     | blif_data latch EOL                   { }
-    | blif_data subckt EOL                  { 
-                                                callback.end_subckt(); 
-                                            }
-    | blif_data DOT_BLACKBOX EOL            { 
-                                                exit_names(callback);
-                                                callback.blackbox(); 
-                                            }
-    | blif_data DOT_END EOL                 { 
-                                                exit_names(callback);
-                                                callback.end_model(); 
-                                            }
+    | blif_data DOT_BLACKBOX EOL            { callback.blackbox(); }
+    | blif_data DOT_END EOL                 { callback.end_model(); }
     | blif_data EOL                         {}
     ;
 
-subckt: DOT_SUBCKT STRING       { 
-                                    exit_names(callback);
-                                    callback.start_subckt($2);
-                                }
-    | subckt STRING EQ STRING   { 
-                                    callback.port_connection($2, $4);
-                                }
+names: DOT_NAMES string_list EOL { $$ = Names(); $$.nets = $2; }
+    | names so_cover_row EOL { $$ = $1; $$.so_cover.push_back($2); }
+    ;
+
+subckt: DOT_SUBCKT STRING       { $$ = SubCkt(); $$.model = $2; }
+    | subckt STRING EQ STRING   { $$ = $1; $$.ports.push_back($2); $$.nets.push_back($4); }
     ;
 
 latch: DOT_LATCH STRING STRING {
                                     //Input and output only
-                                    exit_names(callback);
                                     callback.latch($2, $3, LatchType::UNSPECIFIED, "", LogicValue::UNKOWN);
                                }
     | DOT_LATCH STRING STRING latch_type latch_control {
                                     //Input, output, type and control
-                                    exit_names(callback);
                                     callback.latch($2, $3, $4, $5, LogicValue::UNKOWN);
                                }
     | DOT_LATCH STRING STRING latch_type latch_control latch_init {
                                     //Input, output, type, control and init-value
-                                    exit_names(callback);
                                     callback.latch($2, $3, $4, $5, $6);
                                }
     | DOT_LATCH STRING STRING latch_init {
                                     //Input, output, and init-value
-                                    exit_names(callback);
                                     callback.latch($2, $3, LatchType::UNSPECIFIED, "", $4);
                                }
     ;
