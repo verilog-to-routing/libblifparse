@@ -11,6 +11,16 @@
  * files. It supporst the features required to handle basic netlists (e.g. .model, 
  * .inputs, .outputs, .subckt, .names, .latch)
  *
+ * USAGE
+ * --------------------------
+ * Define a callback derived from the blifparse::Callback interface, and pass it
+ * to one of the blifparse::blif_parse_*() functions.
+ *
+ * The parser will then call the various callback methods as it encouters the 
+ * appropriate parts of the netlist.
+ *
+ * See main.cpp and blif_pretty_print.hpp for example usage.
+ *
  */
 #include <vector>
 #include <string>
@@ -24,7 +34,6 @@ namespace blifparse {
  */
 enum class LogicValue;
 enum class LatchType;
-struct BlifData;
 
 class Callback {
     public:
@@ -76,13 +85,6 @@ void default_blif_error(const int line_number, const std::string& near_text, con
 void set_blif_error_handler(std::function<void(const int, const std::string&, const std::string&)> new_blif_error_handler);
 
 /*
- * Sentinal values
- */
-constexpr double UNINITIALIZED_FLOAT = std::numeric_limits<double>::quiet_NaN();
-constexpr int UNINITIALIZED_INT = -1;
-
-
-/*
  * Enumerations
  */
 enum class LogicValue {
@@ -99,13 +101,6 @@ enum class LatchType {
     ACTIVE_LOW,
     ASYNCHRONOUS,
     UNSPECIFIED //If no type is specified
-};
-
-/*
- * Data structures
- */
-struct BlifData {
-
 };
 
 } //namespace

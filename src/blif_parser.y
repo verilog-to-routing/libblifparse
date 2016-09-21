@@ -124,7 +124,6 @@ using namespace blifparse;
 %token <std::string> CHAR
 
 /* declare types */
-%type <std::shared_ptr<BlifData>> blif_data
 %type <std::vector<std::string>> string_list
 %type <std::vector<LogicValue>> so_cover_row
 %type <LogicValue> latch_init
