@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "blifparse.hpp"
+#include "blif_pretty_print.hpp"
 
 using namespace blifparse;
 
@@ -20,7 +21,8 @@ int main(int argc, char **argv) {
     blifparse::set_blif_error_handler(custom_blif_error);
 
     //Parse the file
-    auto blif_data = blif_parse_filename(argv[1]);
+    blifparse::BlifPrettyPrinter pretty_printer;
+    blif_parse_filename(argv[1], pretty_printer);
     return 0;
 }
 

@@ -15,26 +15,24 @@ namespace blifparse {
  * the blif commands.  See blif.h for data structure
  * detials.
  */
-std::shared_ptr<BlifData> blif_parse_filename(std::string filename) {
-    return blif_parse_filename(filename.c_str());
+void blif_parse_filename(std::string filename, Callback& callback) {
+    blif_parse_filename(filename.c_str(), callback);
 }
 
-std::shared_ptr<BlifData> blif_parse_filename(const char* filename) {
+void blif_parse_filename(const char* filename, Callback& callback) {
     std::shared_ptr<BlifData> blif_data;
 
     FILE* infile = std::fopen(filename, "r");
     if(infile != NULL) {
-        blif_data = blif_parse_file(infile);
+        blif_parse_file(infile, callback);
         std::fclose(infile);
     } else {
         std::fclose(infile);
         blif_error_wrap(0, "", "Could not open file %s.\n", filename);
     }
-
-    return blif_data;
 }
 
-std::shared_ptr<BlifData> blif_parse_file(FILE* blif_file) {
+void blif_parse_file(FILE* blif_file, Callback& callback) {
 
     //Initialize the lexer
     Lexer lexer(blif_file);
@@ -42,15 +40,13 @@ std::shared_ptr<BlifData> blif_parse_file(FILE* blif_file) {
     auto blif_data = std::make_shared<BlifData>();
 
     //Setup the parser + lexer
-    Parser parser(lexer, blif_data);
+    Parser parser(lexer, callback);
 
     //Do the parse
     int error = parser.parse();
     if(error) {
         blif_error_wrap(0, "", "BLIF Error: file failed to parse!\n");
     }
-
-    return blif_data;
 }
 
 /*

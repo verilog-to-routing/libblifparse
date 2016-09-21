@@ -40,18 +40,113 @@
  */
 %option prefix="blifparse_" 
 
+/* Common character classes */
+ALPHA_SYMBOLS [-a-zA-Z_~|:*/\[\]\.\{\}^+$]
+DIGITS [0-9]
+ALPHA_NUM_SYMBOLS ({ALPHA_SYMBOLS}|{DIGITS})
+BACK_SLASH [\\]
+WS [ \t]
+ENDL (\n|\n\r)
+
+/* Special Parser States */
+%x LATCH
+%x NAMES
+%x SO_COVER
+
 /*
  * Symbol Definitions
  */
 %%
-"#".*                           { /* skip comments */ }
-[\n\r]+                         { return blifparse::Parser::make_EOL(); }
-[ \t]+                          { /* skip white space */ }
-
-[-+]?[0-9]+                     { return blifparse::Parser::make_INT_NUMBER(atoi(blifparse_get_text(yyscanner))); }
-[-+]?([0-9]*\.?[0-9]+|[0-9]+\.) { return blifparse::Parser::make_FLOAT_NUMBER(atof(blifparse_get_text(yyscanner))); }
-[-a-zA-Z0-9_~|:*\\/]*           { 
-                                  return blifparse::Parser::make_STRING(blifparse_get_text(yyscanner)); 
+<*>#.*{ENDL}                    { /* ignore comments */ }
+^{WS}*{ENDL}                    { /* Ignore blank lines. */ }
+\\{ENDL}{WS}*{ENDL}             { 
+                                  /* 
+                                   * Do forward end of line if the last line was a continuation. 
+                                   *
+                                   * Some times line continuations are followed by blank lines (which 
+                                   * are otherwise ignored). In these cases we *do* want to 
+                                   * forward EOL, so the parser knows the continued line has finished 
+                                   */ 
+                                  return blifparse::Parser::make_EOL(); 
+                                }
+<*>\\{ENDL}                     { /* line continuation (don't forward EOL to parser) */ }
+{ENDL}                          { 
+                                  return blifparse::Parser::make_EOL(); 
+                                }
+<*>{WS}+                        { /* skip white space */ }
+<*>\.names                      { 
+                                  /*
+                                   * To process the single output cover rows of the names directly as symbols
+                                   * (rather than as strings) we use a special lexer state.
+                                   */
+                                  BEGIN(NAMES);
+                                  return blifparse::Parser::make_DOT_NAMES(); 
+                                }
+<*>\.latch                      { 
+                                  /*
+                                   * The initial state value of a latch is ambiguous (it chould be 
+                                   * interpreted as a string or logic value string). So we use
+                                   * a special lexer state to capture it.
+                                   */
+                                  BEGIN(LATCH); 
+                                  return blifparse::Parser::make_DOT_LATCH(); 
+                                }
+<*>\.model                      { BEGIN(INITIAL); return blifparse::Parser::make_DOT_MODEL(); }
+<*>\.subckt                     { BEGIN(INITIAL); return blifparse::Parser::make_DOT_SUBCKT(); }
+<*>\.inputs                     { BEGIN(INITIAL); return blifparse::Parser::make_DOT_INPUTS(); }
+<*>\.outputs                    { BEGIN(INITIAL); return blifparse::Parser::make_DOT_OUTPUTS(); }
+<*>\.end                        { BEGIN(INITIAL); return blifparse::Parser::make_DOT_END(); }
+<*>\.blackbox                   { BEGIN(INITIAL); return blifparse::Parser::make_DOT_BLACKBOX(); }
+=                               { return blifparse::Parser::make_EQ();}
+<LATCH>fe                       { return blifparse::Parser::make_LATCH_FE(); }
+<LATCH>re                       { return blifparse::Parser::make_LATCH_RE(); }
+<LATCH>ah                       { return blifparse::Parser::make_LATCH_AH(); }
+<LATCH>al                       { return blifparse::Parser::make_LATCH_AL(); }
+<LATCH>as                       { return blifparse::Parser::make_LATCH_AS(); }
+<LATCH>NIL                      { return blifparse::Parser::make_NIL(); }
+<LATCH>0                        { return blifparse::Parser::make_LOGIC_FALSE(); }
+<LATCH>1                        { return blifparse::Parser::make_LOGIC_TRUE(); }
+<LATCH>2                        { return blifparse::Parser::make_LATCH_INIT_2(); }
+<LATCH>3                        { return blifparse::Parser::make_LATCH_INIT_3(); }
+<LATCH>{ENDL}                   { 
+                                  /*
+                                   * Latches are only every defined on a single line,
+                                   * so when we see the end of a line while in the LATCH
+                                   * state we can go back to the regular (INITIAL) state.
+                                   */
+                                  BEGIN(INITIAL); return blifparse::Parser::make_EOL(); 
+                                }
+<SO_COVER>0                     { return blifparse::Parser::make_LOGIC_FALSE(); }
+<SO_COVER>1                     { return blifparse::Parser::make_LOGIC_TRUE(); }
+<SO_COVER>\-                    { return blifparse::Parser::make_LOGIC_DONT_CARE(); }
+<SO_COVER>{ENDL}                { return blifparse::Parser::make_EOL(); }
+<NAMES>{ENDL}                   { 
+                                  /*
+                                   * Once we reach the end of a line in NAMES state (i.e. the end of a .names line)
+                                   * we expect the truth table (in single output cover format) to follow, so we enter
+                                   * the SO_COVER state.
+                                   */
+                                  BEGIN(SO_COVER); 
+                                  return blifparse::Parser::make_EOL(); 
+                                }
+<INITIAL,NAMES,LATCH>({DIGITS}({ALPHA_NUM_SYMBOLS}|{BACK_SLASH})*{ALPHA_NUM_SYMBOLS}+)|(({ALPHA_SYMBOLS}|{BACK_SLASH})*({ALPHA_NUM_SYMBOLS}|{BACK_SLASH})*{ALPHA_NUM_SYMBOLS}) {
+                                    /* The terrible regex above covers two cases:
+                                     *  1) An identifier starts with a digit, contains a combination of
+                                     *     alpha numeric and symbolic characters. To avoid conflicts with
+                                     *     line continuation, back slashes are forbidden in the last character.
+                                     *  2) An identifier with a non-numeric first letter (i.e. alpha, symbol, back slash)
+                                     *     followed by any number of (alpha, num, symbol, back slash) the last character
+                                     *     can be any alpha/num/symbol excluding back slashes (to avoid conflicts with line continuation)
+                                     */
+                                    /*
+                                     * We allow all sorts of characters in regular strings.
+                                     * However we need to be careful about line continuations
+                                     * in particular, it is possible that we could have a string 
+                                     * followed by a continuation with no space for this reason, 
+                                     * we do not allow a continuation (backslash, \\ in escaped 
+                                     * form in the regex) in the last character of the string.
+                                     */
+                                    return blifparse::Parser::make_STRING(blifparse_get_text(yyscanner)); 
                                 }
 <<EOF>>                         { /* If the file has no blank line at the end there will
                                      not be the expected EOL following the last command. 

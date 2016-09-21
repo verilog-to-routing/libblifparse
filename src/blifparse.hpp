@@ -22,15 +22,39 @@ namespace blifparse {
 /*
  * Data structure Forward declarations
  */
+enum class LogicValue;
+enum class LatchType;
 struct BlifData;
+
+class Callback {
+    public:
+        virtual ~Callback() {};
+        virtual void start_model(std::string model_name) = 0;
+        virtual void inputs(std::vector<std::string> inputs) = 0;
+        virtual void outputs(std::vector<std::string> outputs) = 0;
+
+        virtual void start_names(std::vector<std::string> connections) = 0;
+        virtual void single_output_cover_row(std::vector<LogicValue> so_row) = 0;
+        virtual void end_names() = 0;
+
+        virtual void latch(std::string input, std::string output, LatchType type, std::string control, LogicValue init) = 0;
+
+        virtual void start_subckt(std::string model) = 0;
+        virtual void port_connection(std::string port, std::string net) = 0;
+        virtual void end_subckt() = 0;
+
+        virtual void blackbox() = 0;
+
+        virtual void end_model() = 0;
+};
+
 
 /*
  * External functions for loading an SDC file
  */
-std::shared_ptr<BlifData> blif_parse_filename(std::string filename);
-std::shared_ptr<BlifData> blif_parse_filename(const char* filename);
-std::shared_ptr<BlifData> blif_parse_file(FILE* blif);
-
+void blif_parse_filename(std::string filename, Callback& callback);
+void blif_parse_filename(const char* filename, Callback& callback);
+void blif_parse_file(FILE* blif, Callback& callback);
 
 /* 
  * The default blif_error() implementation.
@@ -64,7 +88,7 @@ constexpr int UNINITIALIZED_INT = -1;
 enum class LogicValue {
     FALSE = 0,  //Logic zero
     TRUE = 1,   //Logic one
-    DC,     //Don't care
+    DONT_CARE,     //Don't care
     UNKOWN  //Unkown (e.g. latch initial state)
 };
 
@@ -75,18 +99,6 @@ enum class LatchType {
     ACTIVE_LOW,
     ASYNCHRONOUS,
     UNSPECIFIED //If no type is specified
-};
-
-enum class BlifNodeType {
-    NAMES,
-    LATCH,
-    SUBCKT,
-    MODEL
-};
-
-enum class NetTermType {
-    DRIVER,
-    SINK
 };
 
 /*
