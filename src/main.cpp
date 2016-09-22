@@ -10,6 +10,19 @@ int exit_code = 0;
 
 void custom_blif_error(const int lineno, const std::string& near_text, const std::string& msg);
 
+class NoOpCallback : public Callback {
+    void start_model(std::string /*model_name*/) override {}
+    void inputs(std::vector<std::string> /*inputs*/) override {}
+    void outputs(std::vector<std::string> /*outputs*/) override {}
+
+    void names(std::vector<std::string> /*nets*/, std::vector<std::vector<LogicValue>> /*so_cover*/) override {}
+    void latch(std::string /*input*/, std::string /*output*/, LatchType /*type*/, std::string /*control*/, LogicValue /*init*/) override {}
+    void subckt(std::string /*model*/, std::vector<std::string> /*ports*/, std::vector<std::string> /*nets*/) override {}
+    void blackbox() override {}
+
+    void end_model() override {}
+};
+
 int main(int argc, char **argv) {
     if(argc != 2) {
         fprintf(stderr, "Usage: %s filename.blif\n", argv[0]);
@@ -23,8 +36,9 @@ int main(int argc, char **argv) {
     blifparse::set_blif_error_handler(custom_blif_error);
 
     //Parse the file
-    blifparse::BlifPrettyPrinter pretty_printer;
-    blif_parse_filename(argv[1], pretty_printer);
+    blifparse::BlifPrettyPrinter callback;
+    //NoOpCallback callback;
+    blif_parse_filename(argv[1], callback);
     return exit_code;
 }
 
