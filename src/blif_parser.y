@@ -121,7 +121,6 @@ using namespace blifparse;
 
 /* declare variable tokens */
 %token <std::string> STRING
-%token <std::string> CHAR
 
 /* declare types */
 %type <SubCkt> subckt
@@ -159,7 +158,7 @@ blif_data: /*empty*/ {}
 
 names: DOT_NAMES string_list EOL { $$ = Names(); $$.nets = $2; }
     | names so_cover_row EOL { 
-                                $$ = $1; 
+                                $$ = std::move($1); 
                                 if($$.nets.size() != $2.size()) {
                                     blif_error_wrap(lexer.lineno(), lexer.text(),
                                         "Mismatched .names single-output cover row."
@@ -171,7 +170,7 @@ names: DOT_NAMES string_list EOL { $$ = Names(); $$.nets = $2; }
     ;
 
 subckt: DOT_SUBCKT STRING       { $$ = SubCkt(); $$.model = $2; }
-    | subckt STRING EQ STRING   { $$ = $1; $$.ports.push_back($2); $$.nets.push_back($4); }
+    | subckt STRING EQ STRING   { $$ = std::move($1); $$.ports.push_back($2); $$.nets.push_back($4); }
     ;
 
 latch: DOT_LATCH STRING STRING {
@@ -210,7 +209,7 @@ latch_type: LATCH_FE { $$ = LatchType::FALLING_EDGE; }
     ;
 
 so_cover_row: logic_value { $$ = std::vector<LogicValue>(); $$.push_back($1); }
-    | so_cover_row logic_value { $$ = $1; $$.push_back($2); }
+    | so_cover_row logic_value { $$ = std::move($1); $$.push_back($2); }
     ;
 
 logic_value: LOGIC_TRUE { $$ = LogicValue::TRUE; }
@@ -219,7 +218,7 @@ logic_value: LOGIC_TRUE { $$ = LogicValue::TRUE; }
     ;
 
 string_list: /*empty*/ { $$ = std::vector<std::string>(); }
-    | string_list STRING { $$ = $1; $$.push_back($2); }
+    | string_list STRING { $$ = std::move($1); $$.push_back($2); }
     ;
 
 %%

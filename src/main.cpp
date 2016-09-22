@@ -11,16 +11,18 @@ int exit_code = 0;
 void custom_blif_error(const int lineno, const std::string& near_text, const std::string& msg);
 
 class NoOpCallback : public Callback {
-    void start_model(std::string /*model_name*/) override {}
-    void inputs(std::vector<std::string> /*inputs*/) override {}
-    void outputs(std::vector<std::string> /*outputs*/) override {}
+    //A No-op version of the callback
+    public:
+        void start_model(std::string /*model_name*/) override {}
+        void inputs(std::vector<std::string> /*inputs*/) override {}
+        void outputs(std::vector<std::string> /*outputs*/) override {}
 
-    void names(std::vector<std::string> /*nets*/, std::vector<std::vector<LogicValue>> /*so_cover*/) override {}
-    void latch(std::string /*input*/, std::string /*output*/, LatchType /*type*/, std::string /*control*/, LogicValue /*init*/) override {}
-    void subckt(std::string /*model*/, std::vector<std::string> /*ports*/, std::vector<std::string> /*nets*/) override {}
-    void blackbox() override {}
+        void names(std::vector<std::string> /*nets*/, std::vector<std::vector<LogicValue>> /*so_cover*/) override {}
+        void latch(std::string /*input*/, std::string /*output*/, LatchType /*type*/, std::string /*control*/, LogicValue /*init*/) override {}
+        void subckt(std::string /*model*/, std::vector<std::string> /*ports*/, std::vector<std::string> /*nets*/) override {}
+        void blackbox() override {}
 
-    void end_model() override {}
+        void end_model() override {}
 };
 
 int main(int argc, char **argv) {
