@@ -143,15 +143,31 @@ blif_data: /*empty*/ {}
     | blif_data DOT_INPUTS string_list EOL  { callback.inputs($3); }
     | blif_data DOT_OUTPUTS string_list EOL { callback.outputs($3); }
     | blif_data names                       { callback.names($2.nets, $2.so_cover); }
-    | blif_data subckt EOL                  { callback.subckt($2.model, $2.ports, $2.nets); }
+    | blif_data subckt EOL                  { 
+                                              if($2.ports.size() != $2.nets.size()) {
+                                                  blif_error_wrap(lexer.lineno(), lexer.text(), 
+                                                    "Mismatched subckt port and net connection(s) size do not match"
+                                                    " (%zu ports, %zu nets)", $2.ports.size(), $2.nets.size());
+                                              }
+                                              callback.subckt($2.model, $2.ports, $2.nets);
+                                            }
     | blif_data latch EOL                   { }
     | blif_data DOT_BLACKBOX EOL            { callback.blackbox(); }
     | blif_data DOT_END EOL                 { callback.end_model(); }
-    | blif_data EOL                         {}
+    | blif_data EOL                         { /* eat end-of-lines */}
     ;
 
 names: DOT_NAMES string_list EOL { $$ = Names(); $$.nets = $2; }
-    | names so_cover_row EOL { $$ = $1; $$.so_cover.push_back($2); }
+    | names so_cover_row EOL { 
+                                $$ = $1; 
+                                if($$.nets.size() != $2.size()) {
+                                    blif_error_wrap(lexer.lineno(), lexer.text(),
+                                        "Mismatched .names single-output cover row."
+                                        " names connected to %zu net(s), but cover row has %zu element(s)",
+                                        $$.nets.size(), $2.size());
+                                }
+                                $$.so_cover.push_back($2); 
+                             }
     ;
 
 subckt: DOT_SUBCKT STRING       { $$ = SubCkt(); $$.model = $2; }

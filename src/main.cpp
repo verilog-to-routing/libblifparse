@@ -6,6 +6,8 @@
 
 using namespace blifparse;
 
+int exit_code = 0;
+
 void custom_blif_error(const int lineno, const std::string& near_text, const std::string& msg);
 
 int main(int argc, char **argv) {
@@ -23,10 +25,11 @@ int main(int argc, char **argv) {
     //Parse the file
     blifparse::BlifPrettyPrinter pretty_printer;
     blif_parse_filename(argv[1], pretty_printer);
-    return 0;
+    return exit_code;
 }
 
 void custom_blif_error(const int lineno, const std::string& near_text, const std::string& msg) {
     fprintf(stderr, "Custom Error at line %d near '%s': %s\n", lineno, near_text.c_str(), msg.c_str());
+    exit_code = 1;
 }
 
