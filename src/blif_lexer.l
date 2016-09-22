@@ -4,6 +4,7 @@
      */
     #include "blifparse.hpp"
     #include "blif_common.hpp"
+    #include "blif_error.hpp"
 
     #include "blif_lexer.hpp"
 
@@ -157,5 +158,5 @@ ENDL (\n|\n\r)
                                      line IS blank - so the parse must handle those correclty. */
                                   static bool once; return (once = !once) ? blifparse::Parser::make_EOL() : blifparse::Parser::make_EOF();
                                 }
-.                               { assert(false); }
+<*>.                            { blifparse::blif_error_wrap(blifparse_get_lineno(yyscanner), blifparse_get_text(yyscanner), "Unrecognzied character"); }
 %%
