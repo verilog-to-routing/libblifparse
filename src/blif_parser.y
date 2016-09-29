@@ -138,7 +138,7 @@ using namespace blifparse;
 %%
 
 blif_data: /*empty*/ { }
-    | blif_data DOT_MODEL STRING EOL        { callback.lineno(lexer.lineno()); callback.start_model($3); }
+    | blif_data DOT_MODEL STRING EOL        { callback.lineno(lexer.lineno()); callback.begin_model($3); }
     | blif_data DOT_INPUTS string_list EOL  { callback.lineno(lexer.lineno()); callback.inputs($3); }
     | blif_data DOT_OUTPUTS string_list EOL { callback.lineno(lexer.lineno()); callback.outputs($3); }
     | blif_data names                       { callback.lineno(lexer.lineno()); callback.names($2.nets, $2.so_cover); }
