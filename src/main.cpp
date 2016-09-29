@@ -24,8 +24,8 @@ class NoOpCallback : public Callback {
 
         void end_model() override {}
 
-        void filename(std::string fname) override;
-        void lineno(int line_num) override;
+        void filename(std::string fname) override {};
+        void lineno(int line_num) override {};
 };
 
 int main(int argc, char **argv) {
@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
     blifparse::set_blif_error_handler(custom_blif_error);
 
     //Parse the file
-    blifparse::BlifPrettyPrinter callback(true);
-    //NoOpCallback callback;
+    //blifparse::BlifPrettyPrinter callback(true);
+    NoOpCallback callback;
     blif_parse_filename(argv[1], callback);
     return exit_code;
 }
