@@ -45,7 +45,7 @@
 %option prefix="blifparse_" 
 
 /* Common character classes */
-ALPHA_SYMBOLS [-a-zA-Z_~|:*/\[\]\.\{\}^+$]
+ALPHA_SYMBOLS [-a-zA-Z_~|:*/\[\]\.\{\}^+$;'"]
 DIGITS [0-9]
 ALPHA_NUM_SYMBOLS ({ALPHA_SYMBOLS}|{DIGITS})
 BACK_SLASH [\\]
