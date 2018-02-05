@@ -9,6 +9,26 @@
 
 namespace blifparse {
 
+//.conn [Extended BLIF]
+void Callback::conn(std::string src, std::string /*dst*/) {
+    parse_error(-1, src, "Unsupported BLIF extension '.conn'");
+}
+
+//.cname [Extended BLIF]
+void Callback::cname(std::string cell_name) {
+    parse_error(-1, cell_name, "Unsupported BLIF extension '.cname'");
+}
+
+//.attr [Extended BLIF]
+void Callback::attr(std::string name, std::string /*value*/) {
+    parse_error(-1, name, "Unsupported BLIF extension '.attr'");
+}
+
+//.param [Extended BLIF]
+void Callback::param(std::string name, std::string /*value*/) {
+    parse_error(-1, name, "Unsupported BLIF extension '.param'");
+}
+
 /*
  * Given a filename parses the file as an BLIF file
  * and returns a pointer to a struct containing all
