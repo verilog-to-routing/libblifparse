@@ -10,23 +10,23 @@
 namespace blifparse {
 
 //.conn [Extended BLIF]
-void Callback::conn(std::string src, std::string /*dst*/) {
-    parse_error(-1, src, "Unsupported BLIF extension '.conn'");
+void Callback::conn(std::string /*src*/, std::string /*dst*/) {
+    parse_error(-1, ".conn", "Unsupported BLIF extension");
 }
 
 //.cname [Extended BLIF]
-void Callback::cname(std::string cell_name) {
-    parse_error(-1, cell_name, "Unsupported BLIF extension '.cname'");
+void Callback::cname(std::string /*cell_name*/) {
+    parse_error(-1, ".cname", "Unsupported BLIF extension");
 }
 
 //.attr [Extended BLIF]
-void Callback::attr(std::string name, std::string /*value*/) {
-    parse_error(-1, name, "Unsupported BLIF extension '.attr'");
+void Callback::attr(std::string /*name*/, std::string /*value*/) {
+    parse_error(-1, ".attr", "Unsupported BLIF extension");
 }
 
 //.param [Extended BLIF]
-void Callback::param(std::string name, std::string /*value*/) {
-    parse_error(-1, name, "Unsupported BLIF extension '.param'");
+void Callback::param(std::string /*name*/, std::string /*value*/) {
+    parse_error(-1, ".param", "Unsupported BLIF extension");
 }
 
 /*
