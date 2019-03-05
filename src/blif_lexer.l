@@ -61,7 +61,9 @@ ENDL (\n|\n\r|\r\n)
  * Symbol Definitions
  */
 %%
-<*>#.*{ENDL}                    { /* ignore comments */ }
+<*>#.*{ENDL}                    { /* ignore comments, but forward EOL for end of line comments */
+                                  return blifparse::Parser::make_EOL();
+                                }
 ^{WS}*{ENDL}                    { /* Ignore blank lines. */ }
 \\{ENDL}{WS}*{ENDL}             { 
                                   /* 
