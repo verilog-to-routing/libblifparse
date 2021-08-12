@@ -105,10 +105,10 @@ void blif_parse_file(FILE* blif, Callback& callback, const char* filename="");
  * Enumerations
  */
 enum class LogicValue {
-    FALSE = 0,  //Logic zero
-    TRUE = 1,   //Logic one
-    DONT_CARE,     //Don't care
-    UNKOWN  //Unkown (e.g. latch initial state)
+    FALSE = 0,  // Logic zero
+    TRUE = 1,   // Logic one
+    DONT_CARE,  // Don't care
+    UNKNOWN     // Unknown (e.g. latch initial state)
 };
 
 enum class LatchType {
