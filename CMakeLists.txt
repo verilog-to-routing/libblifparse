@@ -70,3 +70,38 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 install(TARGETS libblifparse blifparse_test DESTINATION bin)
+
+#
+# ----------------------- Code format --------------------------
+#
+
+set(code_format_files
+    -name '*.cpp' -print -o -name '*.h' -print
+    -o -name '*.tpp' -print -o -name '*.hpp' -print)
+
+set(code_format_dirs ${PROJECT_SOURCE_DIR}/src)
+
+#
+# Use clang-format-5.0 for code format
+#
+add_custom_target(format-cpp
+    COMMAND find ${code_format_dirs} ${code_format_files} |
+        xargs -P `nproc` clang-format-5.0 -style=file -i)
+
+#
+# Use simple python script for fixing C like boxed comments
+#
+add_custom_target(format-cpp-fix-comments DEPENDS format-cpp
+    COMMAND find ${code_format_dirs} ${code_format_files} |
+        xargs -L 1 -P `nproc`
+        python3 ${PROJECT_SOURCE_DIR}/scripts/format.py --inplace --fix-comments --input)
+
+#
+# Use simple python script for fixing template brackets e.g. <<>
+#
+add_custom_target(format-cpp-fix-template-operators DEPENDS format-cpp
+    COMMAND find ${code_format_dirs} ${code_format_files} |
+        xargs -L 1 -P `nproc`
+        python3 ${PROJECT_SOURCE_DIR}/scripts/format.py --inplace --fix-template-operators --input)
+
+add_custom_target(format DEPENDS format-cpp-fix-comments format-cpp-fix-template-operators)
